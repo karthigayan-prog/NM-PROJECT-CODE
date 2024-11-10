@@ -1,0 +1,152 @@
+import spacy
+import random
+import datetime
+
+# Load SpaCy language model
+nlp = spacy.load("en_core_web_sm")
+
+class EduBot:
+    def __init__(self):
+        self.name = "EduBot"
+        self.greetings = ["Hello!", "Hi there!", "Greetings!", "Hey! How can I assist you today?"]
+        self.farewells = ["Goodbye!", "See you later!", "Take care!", "Have a great day!"]
+        self.subjects = {
+            "math": self.math_help,
+            "science": self.science_help,
+            "history": self.history_help,
+            "general": self.general_help
+        }
+
+    def greet(self):
+        return random.choice(self.greetings)
+
+    def farewell(self):
+        return random.choice(self.farewells)
+
+    def math_help(self, question):
+        # Use NLP to process the question for math operations
+        doc = nlp(question.lower())
+
+        # Handle sum (addition)
+        if "sum" in question or "add" in question or "plus" in question:
+            numbers = self.extract_numbers(question)
+            if len(numbers) == 2:
+                return f"The sum of {numbers[0]} and {numbers[1]} is {numbers[0] + numbers[1]}."
+            else:
+                return "Please provide two numbers to calculate the sum."
+
+        # Handle subtraction
+        if "minus" in question or "subtract" in question:
+            # Check for "subtract X and Y" format
+            if "subtract" in question and "and" in question:
+                numbers = self.extract_numbers_from_subtraction(question)
+                if len(numbers) == 2:
+                    return f"The result of {numbers[0]} minus {numbers[1]} is {numbers[0] - numbers[1]}."
+                else:
+                    return "Please provide two numbers to subtract."
+            else:
+                numbers = self.extract_numbers(question)
+                if len(numbers) == 2:
+                    return f"The result of {numbers[0]} minus {numbers[1]} is {numbers[0] - numbers[1]}."
+                else:
+                    return "Please provide two numbers to calculate the result."
+
+        # Handle multiplication
+        if "times" in question or "multiply" in question:
+            numbers = self.extract_numbers(question)
+            if len(numbers) == 2:
+                return f"The result of {numbers[0]} times {numbers[1]} is {numbers[0] * numbers[1]}."
+            else:
+                return "Please provide two numbers to multiply."
+
+        # Handle division
+        if "divided by" in question or "divide" in question:
+            numbers = self.extract_numbers(question)
+            if len(numbers) == 2:
+                if numbers[1] != 0:
+                    return f"The result of {numbers[0]} divided by {numbers[1]} is {numbers[0] / numbers[1]}."
+                else:
+                    return "Sorry, you cannot divide by zero!"
+            else:
+                return "Please provide two numbers to divide."
+
+        return "I'm not sure how to process that. Could you clarify your question?"
+
+    def extract_numbers(self, text):
+        """Extracts two numbers from the question text."""
+        doc = nlp(text)
+        numbers = [int(token.text) for token in doc if token.text.isdigit()]
+        return numbers[:2]  # Return only the first two numbers
+
+    def extract_numbers_from_subtraction(self, text):
+        """Extracts numbers for 'subtract X and Y' format."""
+        doc = nlp(text)
+        numbers = [int(token.text) for token in doc if token.text.isdigit()]
+
+        if len(numbers) == 2:
+            return numbers  # Return numbers in order X, Y for subtraction as X - Y
+        return numbers
+
+    def science_help(self, question):
+        if "water" in question:
+            return "Water boils at 100°C (212°F) at sea level and freezes at 0°C (32°F)."
+        elif "earth" in question:
+            return "The Earth is the third planet from the Sun and has one natural satellite, the Moon."
+        else:
+            return "I can help with topics like chemistry, physics, and biology. Could you ask something more specific?"
+
+    def history_help(self, question):
+        if "world war" in question:
+            return "World War I lasted from 1914 to 1918, and World War II lasted from 1939 to 1945."
+        elif "ancient" in question:
+            return "Ancient civilizations include the Egyptians, Mesopotamians, Greeks, and Romans."
+        else:
+            return "I can answer questions about major historical events, civilizations, and more. What would you like to know?"
+
+    def general_help(self, question):
+        if "time" in question:
+            return f"The current time is {datetime.datetime.now().strftime('%H:%M:%S')}"
+        elif "date" in question:
+            return f"Today's date is {datetime.datetime.now().strftime('%Y-%m-%d')}"
+        else:
+            return "I'm here to help you with various subjects like math, science, and history. Ask me anything!"
+
+    def get_response(self, user_input):
+        # Determine the subject of the question
+        subject = self.classify_intent(user_input)
+
+        if subject in self.subjects:
+            return self.subjects[subject](user_input)
+        else:
+            return "I'm not sure how to answer that. Could you ask something more specific?"
+
+    def classify_intent(self, question):
+        """Classify the user's question into a specific subject category."""
+        question = question.lower()
+
+        # Check for math-related keywords
+        if any(keyword in question for keyword in ['math', 'add', 'sum', 'plus', 'subtraction', 'minus', 'times', 'multiply', 'divide', 'divided']):
+            return 'math'
+        elif any(keyword in question for keyword in ['science', 'water', 'earth', 'gravity']):
+            return 'science'
+        elif any(keyword in question for keyword in ['history', 'world war', 'ancient']):
+            return 'history'
+        else:
+            return 'general'
+
+def main():
+    bot = EduBot()
+    print("Welcome to EduBot! Ask me questions about math, science, history, or general topics.")
+
+    while True:
+        user_input = input("You: ")
+
+        if 'exit' in user_input.lower():
+            print(bot.farewell())
+            break
+
+        response = bot.get_response(user_input)
+        print(f"{bot.name}: {response}")
+
+if __name__ == "__main__":
+    main()
